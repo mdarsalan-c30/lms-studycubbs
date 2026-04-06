@@ -1,14 +1,12 @@
 import mysql from 'mysql2/promise';
 import { dbConfig } from './config';
 
-// Individual field connection configuration
-console.log(`[Database] Initializing pool for host: ${dbConfig.host}`);
-
+// Global variable to hold the pool
 const poolWithGlobal = global as typeof globalThis & {
   pool: mysql.Pool | undefined;
 };
 
-// Singleton pattern using individual fields
+// Create the pool only when needed to prevent startup crashes
 export const pool = poolWithGlobal.pool || mysql.createPool({
   host: dbConfig.host,
   user: dbConfig.user,
@@ -16,10 +14,10 @@ export const pool = poolWithGlobal.pool || mysql.createPool({
   database: dbConfig.database,
   port: dbConfig.port,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5, // Reduced limit for shared hosting
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  connectTimeout: 10000 // 10 second timeout
 });
 
 if (process.env.NODE_ENV !== 'production') {
