@@ -1,17 +1,20 @@
 import mysql from 'mysql2/promise';
+import { dbConfig } from './config';
 
-// Environment-aware connection configuration
-const connectionString = process.env.DATABASE_URL || 'mysql://root:@127.0.0.1:3306/studycubs_lms';
-
-console.log(`[Database] Initializing pool for: ${connectionString.split('@')[1]}`);
+// Individual field connection configuration
+console.log(`[Database] Initializing pool for host: ${dbConfig.host}`);
 
 const poolWithGlobal = global as typeof globalThis & {
   pool: mysql.Pool | undefined;
 };
 
-// Singleton pattern to prevent connection leaks during hot-reloading
+// Singleton pattern using individual fields
 export const pool = poolWithGlobal.pool || mysql.createPool({
-  uri: connectionString,
+  host: dbConfig.host,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  port: dbConfig.port,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

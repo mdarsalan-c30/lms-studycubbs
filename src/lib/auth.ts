@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { siteConfig } from "./config";
 
 declare module "next-auth" {
   interface Session {
@@ -15,6 +16,8 @@ declare module "next-auth" {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  secret: siteConfig.secret,
+  trustHost: true,
   providers: [
     Credentials({
       async authorize(credentials) {
