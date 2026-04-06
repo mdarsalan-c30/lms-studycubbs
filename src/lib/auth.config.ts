@@ -1,6 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
+import { siteConfig } from "./config";
 
 export const authConfig = {
+  secret: siteConfig.secret,
   providers: [], // Providers are added in auth.ts to avoid Edge runtime issues with DB drivers
   callbacks: {
     jwt({ token, user }) {
