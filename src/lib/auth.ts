@@ -24,6 +24,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const { email, password } = credentials as { email: string; password: string };
         if (!email || !password) return null;
 
+        console.log(`[Auth] Attempting login for email: ${email}`);
+
         try {
           // Use raw SQL to find the user
           const user = await db.queryOne<{ id: string, name: string, email: string, password: string, role: string }>(
@@ -31,16 +33,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             [email]
           );
 
-          if (!user) return null;
+          if (!user) {
+             console.log(`[Auth] No user found with email: ${email}`);
+             return null;
+          }
 
-          // Compare hashed password, fallback to plain if not hashed (initial setup only)
-          const isValid = await bcrypt.compare(password, user.password).catch(() => password === user.password);
+          console.log(`[Auth] User found! Role: ${user.role}. Verifying password...`);
+
+          // Compare hashed password, fallback to plain if not hashed
+          const isValid = await bcrypt.compare(password, user.password).catch((err) => {
+            console.log(`[Auth] Bcrypt error (likely plain text): ${err.message}`);
+            return password === user.password;
+          });
           
-          if (!isValid) return null;
+          if (!isValid) {
+            console.log(`[Auth] Password mismatch for: ${email}`);
+            return null;
+          }
 
+          console.log(`[Auth] LOGIN SUCCESS for: ${user.name}`);
           return { id: user.id, name: user.name, email: user.email, role: user.role };
-        } catch (error) {
-          console.error("Auth DB error:", error);
+        } catch (error: any) {
+          console.error("[Auth] Database error during login:", error.message);
           return null;
         }
       },
