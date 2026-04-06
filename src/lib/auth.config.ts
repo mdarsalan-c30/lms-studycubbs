@@ -1,9 +1,9 @@
 import type { NextAuthConfig } from "next-auth";
-import { siteConfig } from "./config";
 
 export const authConfig = {
-  secret: siteConfig.secret,
-  providers: [], // Providers are added in auth.ts to avoid Edge runtime issues with DB drivers
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'studycubs-lms-development-secret-key-2024',
+  providers: [], 
+  trustHost: true,
   callbacks: {
     jwt({ token, user }) {
       if (user) token.role = (user as any).role;
