@@ -432,3 +432,33 @@ export async function generateMonthlySalaries(period: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function updateTrialStatus(trialId: string, status: string, notes?: string) {
+  try {
+    if (notes !== undefined) {
+      await db.execute(
+        "UPDATE Trial SET status = ?, notes = ? WHERE id = ?",
+        [status, notes, trialId]
+      );
+    } else {
+      await db.execute(
+        "UPDATE Trial SET status = ? WHERE id = ?",
+        [status, trialId]
+      );
+    }
+    revalidatePath("/admin/trials");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteTrial(trialId: string) {
+  try {
+    await db.execute("DELETE FROM Trial WHERE id = ?", [trialId]);
+    revalidatePath("/admin/trials");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

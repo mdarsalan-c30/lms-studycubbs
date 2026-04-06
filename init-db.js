@@ -1,17 +1,23 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
+require('dotenv').config();
 
-// Database Connection - uses environment variable for production, or local default
-const DATABASE_URL = process.env.DATABASE_URL || 'mysql://root:@127.0.0.1:3306/studycubs_lms';
+// Database Connection - uses environment variables
+const dbConfig = {
+  host: process.env.DB_HOST || '127.0.0.1',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'studycubs_lms',
+};
 
 async function init() {
-  const connection = await mysql.createConnection(DATABASE_URL);
+  const connection = await mysql.createConnection(dbConfig);
   console.log('🚀 Initializing Local MySQL Tables & Seed Data...');
 
   try {
     // 0. Drop existing tables for clean schema sync (Development only)
     await connection.execute("SET FOREIGN_KEY_CHECKS = 0");
-    await connection.execute("DROP TABLE IF EXISTS SalaryPayment, FeePayment, Teacher, Student, User, Batch, Enrollment, ClassSession, Attendance, Assignment, Submission");
+    await connection.execute("DROP TABLE IF EXISTS SalaryPayment, FeePayment, Teacher, Student, User, Batch, Enrollment, ClassSession, Attendance, Assignment, Submission, Trial");
     await connection.execute("SET FOREIGN_KEY_CHECKS = 1");
     console.log('🗑️ Cleaned up old schema...');
 
@@ -192,6 +198,25 @@ async function init() {
         createdAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
         updatedAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
         FOREIGN KEY (teacherId) REFERENCES Teacher(id) ON DELETE CASCADE
+      )
+    `);
+
+    // 12. Trial table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS Trial (
+        id VARCHAR(191) PRIMARY KEY,
+        childName VARCHAR(191) NOT NULL,
+        parentName VARCHAR(191) NOT NULL,
+        email VARCHAR(191) NOT NULL,
+        phone VARCHAR(191) NOT NULL,
+        course VARCHAR(191) NOT NULL,
+        grade VARCHAR(191) NOT NULL,
+        preferredDate VARCHAR(191),
+        preferredTime VARCHAR(191),
+        status ENUM('NEW', 'CONTACTED', 'NOT_ANSWERED', 'RING_BELL', 'FOLLOW_UP_1', 'FOLLOW_UP_2', 'CONVERTED') DEFAULT 'NEW',
+        notes TEXT,
+        createdAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+        updatedAt DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
       )
     `);
 
