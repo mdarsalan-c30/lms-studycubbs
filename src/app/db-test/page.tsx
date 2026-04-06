@@ -14,14 +14,17 @@ export default async function DbTestPage() {
     if (res[0]?.connected === 1) {
       status = "Connected ✅";
       
-      // 2. Try to count users
-      const users = await db.query<any>("SELECT COUNT(*) as count FROM User");
-      userCount = users[0]?.count || 0;
+      // 2. Fetch users summary
+      const users = await db.query<any>("SELECT email, role FROM User LIMIT 10");
+      userCount = users.length;
+      usersList = users;
     }
   } catch (err: any) {
     status = "Failed ❌";
     error = err.message;
   }
+
+  let usersList: any[] = [];
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
@@ -29,8 +32,18 @@ export default async function DbTestPage() {
       <div style={{ padding: '1rem', background: error ? '#fee' : '#efe', borderRadius: '8px' }}>
         <p><strong>Status:</strong> {status}</p>
         <p><strong>Database Host:</strong> {dbConfig.host}</p>
-        <p><strong>Database User:</strong> {dbConfig.user}</p>
-        {userCount > 0 && <p><strong>Users in Database:</strong> {userCount}</p>}
+        <p><strong>Connected as:</strong> {dbConfig.user}</p>
+        
+        {userCount > 0 && (
+          <div style={{ marginTop: '1rem' }}>
+            <strong>Registered Users ({userCount}):</strong>
+            <ul style={{ fontSize: '14px', marginTop: '0.5rem' }}>
+              {usersList.map((u, i) => (
+                <li key={i}>{u.email} - <span style={{ fontWeight: 'bold', color: '#666' }}>[{u.role}]</span></li>
+              ))}
+            </ul>
+          </div>
+        )}
         {error && (
           <div style={{ marginTop: '1rem', color: 'red' }}>
             <strong>Error Details:</strong>
