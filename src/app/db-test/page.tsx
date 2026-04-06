@@ -7,6 +7,7 @@ export default async function DbTestPage() {
   let status = "Testing...";
   let error = null;
   let userCount = 0;
+  let usersList: any[] = [];
 
   try {
     // 1. Try a simple ping
@@ -23,8 +24,6 @@ export default async function DbTestPage() {
     status = "Failed ❌";
     error = err.message;
   }
-
-  let usersList: any[] = [];
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
@@ -51,8 +50,9 @@ export default async function DbTestPage() {
           </div>
         )}
       </div>
-      <div style={{ marginTop: '2rem' }}>
+      <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
         <a href="/auth/login" style={{ color: 'blue' }}>Back to Login</a>
+        <a href="/auth/register" style={{ color: 'green', fontWeight: 'bold' }}>Go to Admin Registration Form</a>
       </div>
     </div>
   );
