@@ -312,7 +312,7 @@ export async function updateTeacherProfile(teacherId: string, data: {
   phone: string;
   specialization: string;
   availability: string;
-  monthlySalary: number;
+  monthlySalary?: number;
 }) {
   try {
     const teacherRes = await db.queryOne<any>("SELECT userId FROM Teacher WHERE id = ?", [teacherId]);
@@ -321,10 +321,18 @@ export async function updateTeacherProfile(teacherId: string, data: {
       "UPDATE User SET name = ?, phone = ? WHERE id = ?",
       [data.name, data.phone, teacherRes.userId]
     );
-    await db.execute(
-      "UPDATE Teacher SET specialization = ?, availability = ?, monthlySalary = ? WHERE id = ?",
-      [data.specialization, data.availability, data.monthlySalary, teacherId]
-    );
+    
+    if (data.monthlySalary !== undefined) {
+      await db.execute(
+        "UPDATE Teacher SET specialization = ?, availability = ?, monthlySalary = ? WHERE id = ?",
+        [data.specialization, data.availability, data.monthlySalary, teacherId]
+      );
+    } else {
+      await db.execute(
+        "UPDATE Teacher SET specialization = ?, availability = ? WHERE id = ?",
+        [data.specialization, data.availability, teacherId]
+      );
+    }
     revalidatePath("/admin/teachers");
     revalidatePath(`/admin/teachers/${teacherId}`);
     revalidatePath("/teacher/dashboard");
