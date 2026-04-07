@@ -435,14 +435,23 @@ export async function generateMonthlySalaries(period: string) {
   }
 }
 
-export async function updateTrialStatus(trialId: string, status: string, notes?: string) {
+export async function updateTrialStatus(trialId: string, status: string, notes?: string | FormData) {
   try {
+    const { serverTimestamp } = await import("firebase/firestore");
     const trialRef = doc(firestore, "trials", trialId);
-    if (notes !== undefined) {
-      await updateDoc(trialRef, { status, notes, updatedAt: new Date() });
-    } else {
-      await updateDoc(trialRef, { status, updatedAt: new Date() });
+    
+    const updateData: any = { 
+      status, 
+      updatedAt: serverTimestamp() 
+    };
+
+    // If notes is a string (manual call), add it. 
+    // If it's FormData (from bind), we ignore it unless we specifically want to extract something.
+    if (typeof notes === 'string') {
+      updateData.notes = notes;
     }
+
+    await updateDoc(trialRef, updateData);
     revalidatePath("/admin/trials");
     return { success: true };
   } catch (error: any) {
