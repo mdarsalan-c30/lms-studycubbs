@@ -1,58 +1,33 @@
-import { 
-  Search, 
-  ChevronRight, 
-  Mail, 
-  Phone, 
-  User, 
-  CheckCircle, 
-  PhoneOff, 
-  Bell, 
-  CalendarClock, 
-  UserPlus, 
-  Trash2,
-  PhoneIncoming,
-  Star,
-  MessageSquare
-} from "lucide-react";
+import { Search, ChevronRight, Bell, CheckCircle, PhoneOff, PhoneIncoming, Star, CalendarClock, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query } from "firebase/firestore";
 import Link from "next/link";
-import { updateTrialStatus, deleteTrial } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+import TrialDetailPanel from "./TrialDetailPanel";
 
-// Void-wrapper server actions (required for Next.js form action type compatibility)
-async function deleteTrialAction(trialId: string): Promise<void> {
-  "use server";
-  await deleteTrial(trialId);
-}
-
-async function updateStatusAction(trialId: string, status: string): Promise<void> {
-  "use server";
-  await updateTrialStatus(trialId, status);
-}
-
-const statusColors: Record<string, { bg: string, text: string, icon: any, label: string }> = {
-  NEW: { bg: "bg-blue-100", text: "text-blue-700", icon: Bell, label: "New Lead" },
-  CONTACTED: { bg: "bg-emerald-100", text: "text-emerald-700", icon: CheckCircle, label: "Contacted" },
-  RING_BELL: { bg: "bg-amber-100", text: "text-amber-700", icon: PhoneIncoming, label: "Ring Bell" },
-  INTERESTED: { bg: "bg-violet-100", text: "text-violet-700", icon: Star, label: "Interested" },
-  FOLLOW_UP_1: { bg: "bg-indigo-100", text: "text-indigo-700", icon: CalendarClock, label: "Follow Up 1" },
-  FOLLOW_UP_2: { bg: "bg-purple-100", text: "text-purple-700", icon: CalendarClock, label: "Follow Up 2" },
-  NOT_ANSWERED: { bg: "bg-rose-100", text: "text-rose-700", icon: PhoneOff, label: "No Answer" },
-  CONVERTED: { bg: "bg-teal-100", text: "text-teal-700", icon: UserPlus, label: "Converted" },
+const statusColors: Record<string, { bg: string; text: string; icon: any; label: string }> = {
+  NEW:          { bg: "bg-blue-100",   text: "text-blue-700",   icon: Bell,          label: "New Lead" },
+  CONTACTED:    { bg: "bg-emerald-100",text: "text-emerald-700",icon: CheckCircle,   label: "Contacted" },
+  RING_BELL:    { bg: "bg-amber-100",  text: "text-amber-700",  icon: PhoneIncoming, label: "Ring Bell" },
+  INTERESTED:   { bg: "bg-violet-100", text: "text-violet-700", icon: Star,          label: "Interested" },
+  FOLLOW_UP_1:  { bg: "bg-indigo-100", text: "text-indigo-700", icon: CalendarClock, label: "Follow Up 1" },
+  FOLLOW_UP_2:  { bg: "bg-purple-100", text: "text-purple-700", icon: CalendarClock, label: "Follow Up 2" },
+  NOT_ANSWERED: { bg: "bg-rose-100",   text: "text-rose-700",   icon: PhoneOff,      label: "No Answer" },
+  CONVERTED:    { bg: "bg-teal-100",   text: "text-teal-700",   icon: UserPlus,      label: "Converted" },
 };
 
-export default async function TrialsPage({ 
-  searchParams 
-}: { 
-  searchParams: Promise<{ q?: string; status?: string; selected?: string }> 
+export default async function TrialsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ q?: string; status?: string; selected?: string }>
 }) {
   const queryParams = await searchParams;
   const search = queryParams.q?.toLowerCase() || "";
   const filterStatus = queryParams.status || "All";
   const selectedId = queryParams.selected || null;
+
 
   // Helper to safely handle different date formats from Firestore
   const safeDate = (date: any) => {
@@ -257,108 +232,7 @@ export default async function TrialsPage({
         </div>
 
         {selected && (
-          <div className="w-[28rem] bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl p-0 flex-shrink-0 sticky top-8 h-fit overflow-hidden animate-in slide-in-from-right duration-500">
-            <div className={cn(
-                "p-10 pb-12 text-center relative overflow-hidden",
-                (statusColors[selected.status] || statusColors.NEW).bg
-            )}>
-              {/* Decorative elements */}
-              <div className="absolute top-[-10%] left-[-10%] w-40 h-40 bg-white/20 rounded-full blur-3xl" />
-              <div className="absolute bottom-[-10%] right-[-10%] w-40 h-40 bg-black/5 rounded-full blur-3xl" />
-
-              <div className="absolute top-6 right-6 flex gap-2">
-                 <form action={deleteTrialAction.bind(null, selected.id)}>
-                    <button type="submit" className="p-3 text-red-500 hover:text-white transition-all bg-white hover:bg-red-500 rounded-2xl shadow-lg border border-red-100" title="Archive / Delete">
-                      <Trash2 size={20} />
-                    </button>
-                 </form>
-              </div>
-
-              <div className="w-28 h-28 rounded-3xl bg-white flex items-center justify-center text-slate-900 text-4xl font-black mx-auto mb-6 shadow-2xl shadow-black/10 relative z-10">
-                {(selected.childName || "U").charAt(0).toUpperCase()}
-              </div>
-              <h3 className="text-2xl font-black text-slate-900 leading-none relative z-10">{selected.childName}</h3>
-              <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/50 backdrop-blur-sm text-[10px] font-black text-slate-600 uppercase tracking-widest relative z-10">
-                Grade {selected.grade} Student
-              </div>
-            </div>
-            
-            <div className="p-10 pt-8">
-              <div className="space-y-4 mb-10">
-                <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-[1.5rem] border border-slate-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100"><User size={20} className="text-slate-400" /></div>
-                    <div>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Parent Name</p>
-                        <p className="text-sm font-bold text-slate-800">{selected.parentName}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-[1.5rem] border border-slate-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100"><Mail size={20} className="text-slate-400" /></div>
-                    <div>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Email Address</p>
-                        <p className="text-sm font-bold text-slate-800">{selected.email}</p>
-                    </div>
-                  </div>
-                  <a href={`mailto:${selected.email}`} className="p-2 text-slate-300 hover:text-violet-500 transition-colors">
-                    <MessageSquare size={18} />
-                  </a>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-[1.5rem] border border-slate-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100"><Phone size={20} className="text-slate-400" /></div>
-                    <div>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Phone Number</p>
-                        <p className="text-sm font-bold text-slate-800 font-mono tracking-tight">{selected.phone}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="pt-8 border-t border-slate-100">
-                <h4 className="text-[11px] font-black text-slate-400 mb-6 uppercase tracking-[0.2em] text-center">Update Relationship Status</h4>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { label: "Contacted", status: "CONTACTED", icon: CheckCircle, color: "text-emerald-600 hover:bg-emerald-50 border-emerald-100" },
-                    { label: "Ring Bell", status: "RING_BELL", icon: PhoneIncoming, color: "text-amber-600 hover:bg-amber-50 border-amber-100" },
-                    { label: "Interested", status: "INTERESTED", icon: Star, color: "text-violet-600 hover:bg-violet-50 border-violet-100" },
-                    { label: "No Answer", status: "NOT_ANSWERED", icon: PhoneOff, color: "text-rose-600 hover:bg-rose-50 border-rose-100" },
-                    { label: "Follow Up 1", status: "FOLLOW_UP_1", icon: CalendarClock, color: "text-indigo-600 hover:bg-indigo-50 border-indigo-100" },
-                    { label: "Follow Up 2", status: "FOLLOW_UP_2", icon: CalendarClock, color: "text-purple-600 hover:bg-purple-50 border-purple-100" },
-                    { label: "Lead Converted", status: "CONVERTED", icon: UserPlus, color: "text-teal-700 bg-teal-50/50 border-teal-200 col-span-2 shadow-lg shadow-teal-100 hover:bg-teal-100" },
-                  ].map(action => (
-                    <form 
-                        key={action.status} 
-                        action={updateStatusAction.bind(null, selected.id, action.status)}
-                        className={action.status === 'CONVERTED' ? "col-span-2" : ""}
-                    >
-                        <Button 
-                            variant="outline" 
-                            className={cn(
-                                "w-full justify-center gap-3 h-14 px-4 text-xs font-black uppercase tracking-widest border-2 rounded-2xl transition-all shadow-sm active:scale-95",
-                                action.color
-                            )}
-                        >
-                            <action.icon size={18} />
-                            {action.label}
-                        </Button>
-                    </form>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-10 pt-4">
-                <Link href={`/admin/trials?q=${search}&status=${filterStatus}`}>
-                  <Button variant="ghost" className="w-full text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] hover:text-slate-600 h-12 rounded-2xl" size="sm">
-                    Dismiss View
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
+          <TrialDetailPanel trial={selected} search={search} filterStatus={filterStatus} />
         )}
       </div>
     </div>
