@@ -38,8 +38,8 @@ export function StudentInvoiceModal({ student, invoice }: StudentInvoiceModalPro
       </Dialog.Trigger>
       
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] animate-in fade-in duration-300" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50 rounded-[2.5rem] shadow-2xl p-4 md:p-8 z-[101] animate-in zoom-in-95 duration-300 focus:outline-none scrollbar-hide print:fixed print:inset-0 print:m-0 print:p-0 print:max-w-none print:max-h-none print:bg-white print:rounded-none">
+        <Dialog.Overlay className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100]" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-50 rounded-[2.5rem] shadow-2xl p-4 md:p-8 z-[101] focus:outline-none scrollbar-hide print:fixed print:inset-0 print:m-0 print:p-0 print:max-w-none print:max-h-none print:bg-white print:rounded-none">
           
           {/* Header Controls - Hidden on Print */}
           <div className="flex items-center justify-between mb-8 print:hidden">
