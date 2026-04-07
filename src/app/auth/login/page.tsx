@@ -1,11 +1,40 @@
 import { LoginForm } from "@/components/auth/login-form";
 
+
 export default function LoginPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-3xl">
-        <LoginForm />
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .login-page-wrapper {
+          display: flex;
+          min-height: 100vh;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background-color: #f8fafc;
+          padding: 1.5rem;
+        }
+        @media (min-width: 768px) {
+          .login-page-wrapper {
+            padding: 2.5rem;
+          }
+        }
+        .login-container {
+          width: 100%;
+          max-width: 400px;
+        }
+        @media (min-width: 768px) {
+          .login-container {
+            max-width: 800px;
+          }
+        }
+      `}} />
+      <div className="login-page-wrapper">
+        <div className="login-container">
+          <LoginForm />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
+
