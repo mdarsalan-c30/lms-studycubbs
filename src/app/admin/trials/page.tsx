@@ -46,17 +46,36 @@ export default async function TrialsPage({
   const filterStatus = queryParams.status || "All";
   const selectedId = queryParams.selected || null;
 
-  // 1. Fetch trials from Firestore
-  const trialsRef = collection(db, "trials");
-  const q = query(trialsRef, orderBy("createdAt", "desc"));
-  const querySnapshot = await getDocs(q);
-  
-  let trials = querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-    status: doc.data().status || "NEW"
-  })) as any[];
+  // Helper to safely handle different date formats from Firestore
+  const safeDate = (date: any) => {
+    if (!date) return new Date().toISOString();
+    if (typeof date.toDate === 'function') return date.toDate().toISOString();
+    if (date instanceof Date) return date.toISOString();
+    if (typeof date === 'string') return date;
+    return new Date().toISOString();
+  };
+
+  let trials: any[] = [];
+  let errorMsg: string | null = null;
+
+  try {
+    const trialsRef = collection(db, "trials");
+    const q = query(trialsRef); // Removing orderBy temporarily to rule out index issues
+    const querySnapshot = await getDocs(q);
+    
+    trials = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: safeDate(doc.data().createdAt),
+      status: doc.data().status || "NEW"
+    }));
+
+    // Re-apply sorting in-memory for safety
+    trials.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch (err: any) {
+    console.error("Firestore getDocs Error:", err);
+    errorMsg = err.message || "Failed to connect to lead database.";
+  }
 
   // 2. Filter in-memory (Firestore basic search is limited)
   if (search) {
@@ -76,6 +95,18 @@ export default async function TrialsPage({
 
   return (
     <div className="p-8 bg-slate-50/30 min-h-screen font-sans">
+      {errorMsg && (
+        <div className="mb-8 p-4 bg-red-50 border-2 border-red-100 rounded-2xl flex items-center gap-4 text-red-600 font-bold animate-pulse">
+          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+             <PhoneOff size={20} />
+          </div>
+          <div>
+            <p className="text-sm">Database Connection Issue: {errorMsg}</p>
+            <p className="text-[10px] uppercase tracking-widest opacity-70">Please check your Firebase console or refresh the page.</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
