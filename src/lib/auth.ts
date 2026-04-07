@@ -17,7 +17,6 @@ declare module "next-auth" {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   secret: siteConfig.secret,
-  trustHost: true,
   providers: [
     Credentials({
       async authorize(credentials) {

@@ -5,7 +5,7 @@
  */
 
 export const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || '127.0.0.1',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || process.env.DB_PASS || '', 
   database: process.env.DB_NAME || 'studycubs_lms',
@@ -17,4 +17,4 @@ export const siteConfig = {
   secret: process.env.NEXTAUTH_SECRET || 'studycubs-lms-development-secret-key-2024',
 };
 
-console.log(`[Config] Using DB Host: ${dbConfig.host}`);
+console.log(`[Config] Initialized for host: ${dbConfig.host}`);

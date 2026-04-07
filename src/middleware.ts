@@ -7,10 +7,12 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
-  const isAuthPage = nextUrl.pathname.startsWith("/auth/login");
+  const isAuthPage = nextUrl.pathname.startsWith("/auth/login") || 
+                     nextUrl.pathname.startsWith("/auth/register") ||
+                     nextUrl.pathname.startsWith("/db-test");
 
   if (isAuthPage) {
-    if (isLoggedIn) {
+    if (isLoggedIn && nextUrl.pathname.startsWith("/auth/login")) {
       const role = (req.auth?.user as any)?.role;
       if (role === "ADMIN" || role === "SUPER_ADMIN") return NextResponse.redirect(new URL("/admin/dashboard", nextUrl));
       if (role === "TEACHER") return NextResponse.redirect(new URL("/teacher/dashboard", nextUrl));
