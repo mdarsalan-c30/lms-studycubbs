@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "shadcn/tailwind.css";
-
 
 @custom-variant dark (&:is(.dark *));
 
@@ -118,10 +116,14 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-    outline: none;
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border, currentColor);
   }
+
   body {
     @apply bg-background text-foreground;
   }
