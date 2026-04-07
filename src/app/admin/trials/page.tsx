@@ -4,14 +4,11 @@ import {
   Mail, 
   Phone, 
   User, 
-  Clock, 
-  Calendar, 
   CheckCircle, 
   PhoneOff, 
   Bell, 
   CalendarClock, 
   UserPlus, 
-  MoreVertical,
   Trash2,
   PhoneIncoming,
   Star,
@@ -20,10 +17,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
+import { collection, getDocs, query } from "firebase/firestore";
 import Link from "next/link";
 import { updateTrialStatus, deleteTrial } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+
+// Void-wrapper server actions (required for Next.js form action type compatibility)
+async function deleteTrialAction(trialId: string): Promise<void> {
+  "use server";
+  await deleteTrial(trialId);
+}
+
+async function updateStatusAction(trialId: string, status: string): Promise<void> {
+  "use server";
+  await updateTrialStatus(trialId, status);
+}
 
 const statusColors: Record<string, { bg: string, text: string, icon: any, label: string }> = {
   NEW: { bg: "bg-blue-100", text: "text-blue-700", icon: Bell, label: "New Lead" },
@@ -259,7 +267,7 @@ export default async function TrialsPage({
               <div className="absolute bottom-[-10%] right-[-10%] w-40 h-40 bg-black/5 rounded-full blur-3xl" />
 
               <div className="absolute top-6 right-6 flex gap-2">
-                 <form action={deleteTrial.bind(null, selected.id)}>
+                 <form action={deleteTrialAction.bind(null, selected.id)}>
                     <button type="submit" className="p-3 text-red-500 hover:text-white transition-all bg-white hover:bg-red-500 rounded-2xl shadow-lg border border-red-100" title="Archive / Delete">
                       <Trash2 size={20} />
                     </button>
@@ -324,7 +332,7 @@ export default async function TrialsPage({
                   ].map(action => (
                     <form 
                         key={action.status} 
-                        action={updateTrialStatus.bind(null, selected.id, action.status)}
+                        action={updateStatusAction.bind(null, selected.id, action.status)}
                         className={action.status === 'CONVERTED' ? "col-span-2" : ""}
                     >
                         <Button 
