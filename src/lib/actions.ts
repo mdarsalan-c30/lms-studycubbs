@@ -1,6 +1,8 @@
 "use server";
 
 import { db } from "./db";
+import { db as firestore } from "./firebase";
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
@@ -435,30 +437,28 @@ export async function generateMonthlySalaries(period: string) {
 
 export async function updateTrialStatus(trialId: string, status: string, notes?: string) {
   try {
+    const trialRef = doc(firestore, "trials", trialId);
     if (notes !== undefined) {
-      await db.execute(
-        "UPDATE Trial SET status = ?, notes = ? WHERE id = ?",
-        [status, notes, trialId]
-      );
+      await updateDoc(trialRef, { status, notes, updatedAt: new Date() });
     } else {
-      await db.execute(
-        "UPDATE Trial SET status = ? WHERE id = ?",
-        [status, trialId]
-      );
+      await updateDoc(trialRef, { status, updatedAt: new Date() });
     }
     revalidatePath("/admin/trials");
     return { success: true };
   } catch (error: any) {
+    console.error("Firestore update error:", error);
     return { success: false, error: error.message };
   }
 }
 
 export async function deleteTrial(trialId: string) {
   try {
-    await db.execute("DELETE FROM Trial WHERE id = ?", [trialId]);
+    const trialRef = doc(firestore, "trials", trialId);
+    await deleteDoc(trialRef);
     revalidatePath("/admin/trials");
     return { success: true };
   } catch (error: any) {
+    console.error("Firestore delete error:", error);
     return { success: false, error: error.message };
   }
 }
