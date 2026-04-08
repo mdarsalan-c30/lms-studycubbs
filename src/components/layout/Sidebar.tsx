@@ -29,7 +29,7 @@ interface SidebarProps {
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/trials", label: "CRM Leads", icon: Bell },
+  { href: "/admin/trials", label: "Trial Bookings", icon: Bell },
   { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/teachers", label: "Teachers", icon: GraduationCap },
   { href: "/admin/batches", label: "Batches", icon: BookOpen },
