@@ -466,7 +466,27 @@ export async function deleteTrial(trialId: string) {
 // --- Firestore Leads Actions ---
 const FIREBASE_API_KEY = "AIzaSyBYK3-y01q4G613EWVk8fXAEIMpwLlrx-Y";
 const PROJECT_ID = "trialleads-cc2e7";
-const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/leads`;
+const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/trials`;
+
+export async function fetchFirestoreLeads() {
+  console.log(`[fetchFirestoreLeads] Starting fetch from Firestore REST API...`);
+  try {
+    const response = await fetch(`${FIRESTORE_BASE_URL}?key=${FIREBASE_API_KEY}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || "Failed to fetch leads from Firestore");
+    }
+
+    const data = await response.json();
+    return { success: true, data: data.documents || [] };
+  } catch (error: any) {
+    console.error("[fetchFirestoreLeads ERROR]", error);
+    return { success: false, error: error.message };
+  }
+}
 
 export async function updateFirestoreLeadStatus(leadId: string, status: string) {
   console.log(`[updateFirestoreLeadStatus] Lead: ${leadId}, Status: ${status}`);

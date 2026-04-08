@@ -10,12 +10,8 @@ import {
   User
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { updateFirestoreLeadStatus, deleteFirestoreLead } from "@/lib/actions";
+import { updateFirestoreLeadStatus, deleteFirestoreLead, fetchFirestoreLeads } from "@/lib/actions";
 import { cn } from "@/lib/utils";
-
-const FIREBASE_API_KEY = "AIzaSyBYK3-y01q4G613EWVk8fXAEIMpwLlrx-Y";
-const PROJECT_ID = "trialleads-cc2e7";
-const FIRESTORE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/leads?key=${FIREBASE_API_KEY}`;
 
 const STATUS_OPTIONS = [
   "new",
@@ -45,14 +41,17 @@ export default function TrialsPage() {
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
 
-  const fetchLeads = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(FIRESTORE_URL, { cache: 'no-store' });
-      if (!res.ok) throw new Error("Failed to fetch leads");
-      const data = await res.json();
-      setLeads(data.documents || []);
-      setError(null);
+      // Calling server action instead of direct fetch to avoid 403 CORS issues
+      const res = await fetchFirestoreLeads();
+      if (res.success) {
+        setLeads(res.data || []);
+        setError(null);
+      } else {
+        throw new Error(res.error || "Failed to load leads");
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -61,14 +60,13 @@ export default function TrialsPage() {
   };
 
   useEffect(() => {
-    fetchLeads();
+    loadData();
   }, []);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     setUpdating(id);
     const res = await updateFirestoreLeadStatus(id, newStatus);
     if (res.success) {
-      // Update local state for immediate feedback
       setLeads(current => current.map(doc => {
         if (doc.name.endsWith(id)) {
           return {
@@ -109,9 +107,10 @@ export default function TrialsPage() {
         </div>
         <div className="flex items-center gap-4">
           <button 
-            onClick={fetchLeads}
+            onClick={loadData}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
             title="Refresh Data"
+            disabled={loading}
           >
             <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
           </button>
@@ -123,9 +122,12 @@ export default function TrialsPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-700">
-          <AlertCircle size={20} />
-          <p className="font-medium">Error: {error}</p>
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-700 font-sans">
+          <AlertCircle size={20} className="flex-shrink-0" />
+          <div>
+            <p className="font-bold underline text-sm">Error: 403 Forbidden</p>
+            <p className="text-xs mt-0.5 opacity-80">Make sure your Firestore security rules are set correctly at Firebase Console.</p>
+          </div>
         </div>
       )}
 
@@ -149,17 +151,18 @@ export default function TrialsPage() {
                   </div>
                 </td>
               </tr>
-            ) : leads.length === 0 ? (
+            ) : leads.length === 0 && !error ? (
               <tr>
                 <td colSpan={4} className="px-6 py-20 text-center text-gray-400">
-                  <p>No leads found in your Firestore "leads" collection.</p>
+                  <p>No leads found in your Firestore "trials" collection.</p>
                 </td>
               </tr>
             ) : leads.map((doc: any) => {
               const id = doc.name.split('/').pop();
               const fields = doc.fields || {};
-              const name = fields.name?.stringValue || fields.childName?.stringValue || "Parent Name (Unknown)";
-              const child = fields.childName?.stringValue || "";
+              // Mapping consistent with landing page field names
+              const name = fields.childName?.stringValue || fields.name?.stringValue || "Unknown";
+              const parent = fields.parentName?.stringValue || "";
               const email = fields.email?.stringValue || "";
               const phone = fields.phone?.stringValue || "";
               const course = fields.course?.stringValue || "";
@@ -168,23 +171,23 @@ export default function TrialsPage() {
 
               return (
                 <tr key={id} className={cn(
-                  "hover:bg-gray-50/50 transition-colors",
+                  "hover:bg-gray-50/50 transition-colors group",
                   updating === id && "opacity-50 pointer-events-none"
                 )}>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold uppercase">
+                      <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold uppercase transition-all group-hover:bg-slate-200">
                         {name.charAt(0)}
                       </div>
                       <div>
                         <p className="font-bold text-gray-900 leading-none mb-1">{name}</p>
-                        {child && <p className="text-[11px] text-gray-400 font-medium">Child: {child}</p>}
+                        {parent && <p className="text-[11px] text-gray-400 font-medium tracking-tight">Parent: {parent}</p>}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <p className="text-sm font-semibold text-gray-700 truncate max-w-[200px]">{course || "Trial Inquiry"}</p>
-                    <div className="flex items-center gap-3 mt-1 underline-offset-4">
+                    <div className="flex items-center gap-3 mt-1">
                       {phone && <a href={`tel:${phone}`} className="text-gray-400 hover:text-blue-600 transition-colors"><Phone size={14} /></a>}
                       {email && <a href={`mailto:${email}`} className="text-gray-400 hover:text-blue-600 transition-colors"><Mail size={14} /></a>}
                       <span className="text-[10px] text-gray-300 ml-1 flex items-center gap-1"><Clock size={10} /> {timestamp}</span>
@@ -193,7 +196,7 @@ export default function TrialsPage() {
                   <td className="px-6 py-5">
                     <select 
                       value={status}
-                      onChange={(e) => handleStatusChange(id!, e.target.value)}
+                      onInput={(e) => handleStatusChange(id!, e.currentTarget.value)}
                       className={cn(
                         "text-[10px] sm:text-[11px] font-bold px-3 py-1.5 rounded-full border outline-none cursor-pointer transition-all appearance-none",
                         statusStyles[status] || "bg-gray-50 border-gray-200"
