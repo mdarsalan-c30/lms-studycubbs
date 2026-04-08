@@ -462,3 +462,54 @@ export async function deleteTrial(trialId: string) {
     return { success: false, error: error.message };
   }
 }
+
+// --- Firestore Leads Actions ---
+const FIREBASE_API_KEY = "AIzaSyBYK3-y01q4G613EWVk8fXAEIMpwLlrx-Y";
+const PROJECT_ID = "trialleads-cc2e7";
+const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/leads`;
+
+export async function updateFirestoreLeadStatus(leadId: string, status: string) {
+  console.log(`[updateFirestoreLeadStatus] Lead: ${leadId}, Status: ${status}`);
+  try {
+    const response = await fetch(`${FIRESTORE_BASE_URL}/${leadId}?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fields: {
+          status: { stringValue: status }
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || "Failed to update Firestore lead");
+    }
+
+    revalidatePath("/admin/trials");
+    return { success: true };
+  } catch (error: any) {
+    console.error("[updateFirestoreLeadStatus ERROR]", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteFirestoreLead(leadId: string) {
+  console.log(`[deleteFirestoreLead] Lead: ${leadId}`);
+  try {
+    const response = await fetch(`${FIRESTORE_BASE_URL}/${leadId}?key=${FIREBASE_API_KEY}`, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || "Failed to delete Firestore lead");
+    }
+
+    revalidatePath("/admin/trials");
+    return { success: true };
+  } catch (error: any) {
+    console.error("[deleteFirestoreLead ERROR]", error);
+    return { success: false, error: error.message };
+  }
+}
